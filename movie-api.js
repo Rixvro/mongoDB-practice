@@ -59,19 +59,116 @@ app.route('/all')
         res.status(500).send("failure");
       }
   })
-  .delete((req, res) => {
-    movieList = [];
-    res.sendStatus(200)
+  .delete(async (req, res) => {
+    let result = [];
+    let error = null;
+    try {
+      await client.connect();
+      const collection = client.db("cfa-classwork").collection("basic-api-movies");
+      result = await collection.deleteMany({});
+      console.log(result);
+    } catch (e) {
+      console.dir(e);
+      error = e;
+    } finally{
+      await client.close();
+    }
+
+    if (error === null){
+      res.sendStatus(200);
+    } else{
+      res.status(500).send("failure");
+    }
   })
 
-app.get('/find', (req, res) => {
-  if (req.query.hasOwnProperty('contains')) {
-    res.json(movieList.filter((title) => title.toLowerCase().indexOf(req.query.contains.toLowerCase()) > -1))
+app.get('/find', async (req, res) => {
+  let result = [];
+  let error = null;
+  if (req.query.hasOwnProperty('contains')){
+
+    try {
+      await client.connect();
+      const collection = client.db("cfa-classwork").collection("basic-api-movies");
+  
+      // result = await collection.find({
+      //   title: {
+      //     $regex: req.query.contains,
+      //     $options: 'i'
+      //   }
+      // }).toArray();
+  
+      result = await collection.find({
+        title: {
+          $regex: new RegExp(req.query.contains, 'i')
+        }
+      }).toArray();
+      console.log(result);
+    } catch (e) {
+      console.dir(e);
+      error = e;
+    } finally{
+      await client.close();
+    }
+  } else if (req.query.hasOwnProperty('startsWith')){
+    try {
+      await client.connect();
+      const collection = client.db('cfa-classwork').collection('basic-api-movies');
+      result = await collection.find({
+        title: {
+          $regex: new RegExp(req.query.startsWith, 'i')
+        }
+      }).toArray();
+    } catch (e) {
+      console.dir(e);
+      error = e;
+    } finally{
+      await client.close();
+    }
   }
-  else if (req.query.hasOwnProperty('startsWith')) {
-    res.json(movieList.filter((title) => title.toLowerCase().indexOf(req.query.startsWith.toLowerCase()) === 0))
+
+  if (error === null){
+    res.json(result.map((value) => {
+      return value.title;
+    }))
+  } else{
+    res.status(500).send("failure");
   }
 })
+
+app.route('/insert')
+  .post(async (req, res) =>{
+    let error = null;
+    let result = [];
+    try {
+      await client.connect();
+      const collection = client.db('cfa-classwork').collection('basic-api-movies');
+
+      insertList = [
+        { "title": "The Avengers" },
+        { "title": "All Dogs Go To Heaven" },
+        { "title": "The Aristocats" },
+        { "title": "The Brave Little Toaster" },
+        { "title": "The Lord of the Rings" },
+        { "title": "The Revenant" },
+        { "title": "Cats & Dogs" }
+    ]
+      result = await collection.insertMany(insertList);
+      console.log(result);
+
+    } catch (e) {
+      console.dir(e);
+      error = e;
+    } finally{
+      await client.close();
+    }
+
+    if (error === null){
+        res.sendStatus(200);      
+        } else{
+      res.status(500).send("failure");
+    }
+
+  })
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`)
