@@ -1,14 +1,17 @@
 const PORT = 3000
 const express = require('express')
 const cors = require('cors')
+require('dotenv').config()
+const envDb = `${process.env.dbName}`
+const envCollection = `${process.env.dbCollectionName}`
 
 const app = express()
 
 app.use(cors())
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "";
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const uri = `mongodb+srv://${process.env.dbUserName}:${process.env.dbUserPass}@${process.env.dbClusterName}.${process.env.dbMongoId}.mongodb.net/${process.env.dbName}?retryWrites=true&w=majority`
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -17,7 +20,7 @@ const client = new MongoClient(uri, {
     strict: true,
     deprecationErrors: true,
   }
-});
+})
 
 
 let movieList = ['Those Avengers', 'All Dogs Go To Heaven', 'The Aristocats', 'The Brave Little Toaster', 'The Lord of the Rings', 'The Revenant', 'Cats & Dogs'];
@@ -31,7 +34,7 @@ app.route('/all')
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
         // Connect to database cfa classwork, specifically the collection basic-api-movies
-        const collection = client.db("cfa-classwork").collection("basic-api-movies");
+        const collection = client.db(envDb).collection(envCollection);
     
         // Interaction to pull movies from database collection
     
@@ -64,7 +67,7 @@ app.route('/all')
     let error = null;
     try {
       await client.connect();
-      const collection = client.db("cfa-classwork").collection("basic-api-movies");
+      const collection = client.db(envDb).collection(envCollection);
       result = await collection.deleteMany({});
       console.log(result);
     } catch (e) {
@@ -88,7 +91,7 @@ app.get('/find', async (req, res) => {
 
     try {
       await client.connect();
-      const collection = client.db("cfa-classwork").collection("basic-api-movies");
+      const collection = client.db(envDb).collection(envCollection);
   
       // result = await collection.find({
       //   title: {
@@ -112,7 +115,7 @@ app.get('/find', async (req, res) => {
   } else if (req.query.hasOwnProperty('startsWith')){
     try {
       await client.connect();
-      const collection = client.db('cfa-classwork').collection('basic-api-movies');
+      const collection = client.db(envDb).collection(envCollection);
       result = await collection.find({
         title: {
           $regex: new RegExp(req.query.startsWith, 'i')
@@ -141,7 +144,7 @@ app.route('/insert')
     let result = [];
     try {
       await client.connect();
-      const collection = client.db('cfa-classwork').collection('basic-api-movies');
+      const collection = client.db(envDb).collection(envCollection);
 
       insertList = [
         { "title": "The Avengers" },
