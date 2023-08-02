@@ -8,6 +8,7 @@ const envCollection = `${process.env.dbCollectionName}`
 const app = express()
 
 app.use(cors())
+app.use(express.json());
 
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -173,6 +174,52 @@ app.route('/insert')
 
   })
 
+  app.route('/edit')
+  .put(async (req, res) => {
+    let error = null;
+    let result = [];
+    try {
+      await client.connect();
+      const collection = client.db(envDb).collection(envCollection);
+
+      insertList = [
+        { "title": "The Avengers" },
+        { "title": "All Dogs Go To Heaven" },
+        { "title": "The Aristocats" },
+        { "title": "The Brave Little Toaster" },
+        { "title": "The Lord of the Rings" },
+        { "title": "The Revenant" },
+        { "title": "Cats & Dogs" }
+    ]
+      result = await collection.updateOne({
+        title: req.body.title,
+      }, {
+        $set: {
+          title: req.body.newTitle
+        }
+      });
+      console.log(result);
+
+      if (result.modifiedCount === 0){
+        throw new Error("Couldn't update! ");
+      }
+
+    } catch (e) {
+      console.dir(e);
+      error = e;
+    } finally{
+      await client.close();
+    }
+
+    if (error === null){
+        res.sendStatus(200);      
+        } else{
+      res.status(500).send("failure");
+    }
+
+  })
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`)
+
 })
